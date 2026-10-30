@@ -61,8 +61,9 @@ This installs the required **DJI USB VCOM** drivers.
 ### 2. Python Dependencies
 Ensure Python 3.9+ is installed, then install the required libraries:
 ```bash
-pip install vgamepad pyserial
+pip install -r requirements.txt
 ```
+*(or manually: `pip install vgamepad pyserial`)*
 
 ---
 
