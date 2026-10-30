@@ -7,7 +7,7 @@ import serial.tools.list_ports
 import vgamepad as vg
 
 parser = argparse.ArgumentParser(description='DJI Mavic 3 RC231, RC-N1)')
-parser.add_argument('-p', '--port', help='RC Serial Port', default="COM9")
+parser.add_argument('-p', '--port', help='RC Serial Port (e.g. COM3). If omitted, automatically detects DJI controller.', default=None)
 
 args = parser.parse_args()
 gamepad = vg.VX360Gamepad()
@@ -126,26 +126,50 @@ def send_duml(s, source, target, cmd_type, cmd_set, cmd_id, payload = None):
 
 print('app version: 3.0.0\n')
 # Open serial.
-try:
+s = None
 
-    result = []
+# If port is specified manually via CLI (-p / --port), attempt connection to it
+if args.port:
+    print(f"Connecting to specified port: {args.port}...")
+    try:
+        s = serial.Serial(port=args.port, baudrate=115200, timeout=1)
+        print('Opened serial port:', s.name)
+    except (OSError, serial.SerialException) as e:
+        print(f"Failed to open specified port {args.port}: {e}")
+        print("Note: If DJI Assistant 2 is running, close it as it locks the COM port.\n")
+
+# Otherwise, automatically scan and detect DJI USB VCOM port
+if s is None:
+    print("Scanning available ports for DJI controller...")
     ports = serial.tools.list_ports.comports(True)
 
     for port in ports:
         try:
-            print(port.description)
-            if port.description.find("For Protocol") != -1:
-                print("found DJI USB VCOM For Protocol")
-                s = serial.Serial(port=port.name, baudrate=115200)
+            print(f"Found: {port.name} - {port.description}")
+            if port.description and "For Protocol" in port.description:
+                print(f"Detected DJI USB VCOM on {port.name}")
+                s = serial.Serial(port=port.name, baudrate=115200, timeout=1)
                 print('Opened serial port:', s.name)
+                break
             else:
                 print("skip")
-            result.append(port)
-        except (OSError, serial.SerialException):
-            pass
+        except (OSError, serial.SerialException) as e:
+            print(f"Error opening port {port.name}: {e}")
+            print("Note: If DJI Assistant 2 is running, close it as it locks the COM port.")
 
-except serial.SerialException as e:
-    print('Could not open serial port:', e)
+if s is None or not getattr(s, 'is_open', False):
+    print("\n" + "=" * 62)
+    print("[ERROR] Impossibile trovare o aprire la porta seriale del controller DJI!")
+    print("=" * 62)
+    print("Possibili soluzioni:")
+    print("  1. Assicurati che il controller DJI sia ACCESO (premi, poi tieni premuto).")
+    print("  2. Collega il cavo USB-C alla porta INFERIORE del radiocomando")
+    print("     (non alla porta superiore per smartphone).")
+    print("  3. Usa un cavo dati USB-C funzionante (non un cavo di sola ricarica).")
+    print("  4. Chiudi completamente DJI Assistant 2 se in esecuzione (blocca la COM).")
+    print("  5. Verifica che in Gestione Dispositivi appaia 'DJI USB VCOM For Protocol',")
+    print("     oppure specifica la porta manualmente: python main.py -p COMx")
+    print("=" * 62 + "\n")
     exit(1)
 
 # Stylistic: Newline for spacing.
