@@ -93,3 +93,4 @@ When asked to extend or refactor this codebase, prioritize:
 - **Stick Mode Selection**: Allow toggling between Mode 2 (default), Mode 1, Mode 3, and Mode 4.
 - **Deadzone & Exponential Tuning**: Configurable deadband, curve expo, and center calibration via a JSON configuration file.
 - **Cross-Platform Support**: Fallback to Linux `uinput` virtual joystick emulation when running under Linux.
+
